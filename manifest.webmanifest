@@ -1,0 +1,17 @@
+{
+  "name": "EsSalud MiConsulta — Maqueta TOGAF",
+  "short_name": "MiConsulta",
+  "description": "Prototipo académico del canal digital de citas médicas (Arquitectura Empresarial TOGAF).",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#E6F3F7",
+  "theme_color": "#0899AE",
+  "lang": "es-PE",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

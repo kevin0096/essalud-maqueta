@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>EsSalud MiConsulta — Maqueta Académica</title>
+  <meta name="description" content="Prototipo académico del canal digital de citas médicas — Arquitectura Empresarial TOGAF (EsSalud TO-BE).">
+  <meta name="theme-color" content="#0899AE">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="MiConsulta">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="icon" href="icons/icon-192.png">
+</head>
+<body>
+
+  <!-- ============ PANTALLA DE LOGIN ============ -->
+  <div id="login-screen" class="login-screen">
+    <div class="login-card">
+      <div class="login-brand">
+        <div class="brand-icon">🏥</div>
+        <div class="brand-text">
+          <span class="brand-essalud">EsSalud</span>
+          <span class="brand-mi">MiConsulta</span>
+        </div>
+      </div>
+      <p class="login-subtitle">Plataforma de Gestión de Citas Médicas — Arquitectura TO-BE</p>
+      <p class="login-instruction">Seleccione un usuario de demostración para ingresar<br>(Control de Acceso Basado en Roles — RBAC)</p>
+
+      <div class="login-users" id="login-users"><!-- generado por JS --></div>
+
+      <div class="login-footer">
+        <button class="btn-link" id="btn-reset-demo" title="Restablece los datos de demostración">↺ Restablecer datos de demo</button>
+        <p class="disclaimer">Maqueta académica desarrollada para el curso de Arquitectura Empresarial (TOGAF).<br>
+        No afiliada a EsSalud. Todos los datos son ficticios y se guardan solo en este navegador.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ APLICACIÓN ============ -->
+  <div id="app" class="app hidden">
+
+    <!-- Barra superior -->
+    <header class="topbar">
+      <button class="menu-toggle" id="menu-toggle" aria-label="Menú">☰</button>
+      <h1 class="topbar-greeting" id="topbar-greeting">Hola</h1>
+      <div class="topbar-right">
+        <button class="bell" id="btn-bell" title="Notificaciones">
+          🔔<span class="bell-count hidden" id="bell-count">0</span>
+        </button>
+        <div class="topbar-logo">
+          <span class="brand-icon-sm">🏥</span>
+          <div class="brand-text-sm"><b>EsSalud</b><span>MiConsulta</span></div>
+        </div>
+      </div>
+    </header>
+
+    <div class="layout">
+      <!-- Menú lateral -->
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+          <div class="brand-icon">🏥</div>
+          <div class="brand-text">
+            <span class="brand-essalud">EsSalud</span>
+            <span class="brand-mi">MiConsulta</span>
+          </div>
+        </div>
+        <div class="sidebar-center" id="sidebar-center">
+          <p class="center-label">Mi Centro:</p>
+          <p class="center-name" id="center-name">—</p>
+          <p class="center-vigencia" id="center-vigencia"></p>
+        </div>
+        <nav class="sidebar-nav" id="sidebar-nav"><!-- generado por JS --></nav>
+        <div class="sidebar-bottom">
+          <button class="nav-item logout" id="btn-logout">➜ Cerrar Sesión</button>
+        </div>
+      </aside>
+
+      <!-- Contenido -->
+      <main class="content" id="content"><!-- generado por JS --></main>
+    </div>
+
+    <!-- Barra de navegación inferior (móvil) -->
+    <nav class="bottomnav" id="bottomnav"><!-- generado por JS --></nav>
+
+    <!-- Panel de notificaciones -->
+    <div class="notif-panel hidden" id="notif-panel">
+      <div class="notif-head">
+        <b>Notificaciones</b>
+        <button class="btn-link" id="btn-notif-read">Marcar leídas</button>
+      </div>
+      <div id="notif-list"></div>
+    </div>
+  </div>
+
+  <!-- Tooltip para gráficos -->
+  <div id="chart-tooltip" class="chart-tooltip hidden"></div>
+
+  <!-- Modal genérico -->
+  <div id="modal-overlay" class="modal-overlay hidden">
+    <div class="modal" id="modal-box"></div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    // PWA: registrar service worker (requiere https o localhost; en file:// se omite)
+    if ("serviceWorker" in navigator && location.protocol !== "file:") {
+      navigator.serviceWorker.register("./sw.js").catch(function () {});
+    }
+  </script>
+</body>
+</html>
