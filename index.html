@@ -11,7 +11,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="MiConsulta">
-  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/styles.css?v=3">
   <link rel="icon" href="icons/icon-192.png">
 </head>
 <body>
@@ -27,8 +27,17 @@
         </div>
       </div>
       <p class="login-subtitle">Plataforma de Gestión de Citas Médicas — Arquitectura TO-BE</p>
-      <p class="login-instruction">Seleccione un usuario de demostración para ingresar<br>(Control de Acceso Basado en Roles — RBAC)</p>
 
+      <form class="login-form" id="login-form" autocomplete="off">
+        <div class="field"><label for="l-dni">DNI</label>
+          <input type="text" id="l-dni" inputmode="numeric" maxlength="8" placeholder="Ej. 45678123"></div>
+        <div class="field"><label for="l-pass">Contraseña</label>
+          <input type="password" id="l-pass" placeholder="••••••"></div>
+        <button type="submit" class="btn login-btn">Ingresar ➜</button>
+      </form>
+      <div id="login-error"></div>
+
+      <div class="login-divider"><span>o ingresa rápido con un usuario de demostración (RBAC)</span></div>
       <div class="login-users" id="login-users"><!-- generado por JS --></div>
 
       <div class="login-footer">
@@ -103,8 +112,8 @@
     <div class="modal" id="modal-box"></div>
   </div>
 
-  <script src="js/data.js"></script>
-  <script src="js/app.js"></script>
+  <script src="js/data.js?v=3"></script>
+  <script src="js/app.js?v=3"></script>
   <script>
     // PWA: registrar service worker (requiere https o localhost; en file:// se omite)
     if ("serviceWorker" in navigator && location.protocol !== "file:") {

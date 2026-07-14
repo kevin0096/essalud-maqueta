@@ -1,7 +1,7 @@
 /* Service Worker — EsSalud MiConsulta (maqueta)
    Cachea el "app shell" para funcionar offline e instalarse como PWA. */
 
-var CACHE = "miconsulta-v2";
+var CACHE = "miconsulta-v3";
 var SHELL = [
   "./",
   "./index.html",
@@ -33,7 +33,7 @@ self.addEventListener("activate", function (e) {
 self.addEventListener("fetch", function (e) {
   if (e.request.method !== "GET") return;
   e.respondWith(
-    fetch(e.request).then(function (res) {
+    fetch(e.request, { cache: "no-cache" }).then(function (res) {
       var copy = res.clone();
       caches.open(CACHE).then(function (c) { c.put(e.request, copy); });
       return res;

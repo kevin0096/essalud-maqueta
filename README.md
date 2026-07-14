@@ -28,19 +28,24 @@ No requiere instalación de nada: es HTML + CSS + JavaScript puro.
 
 ## Qué demuestra (mapeo con el documento TOGAF)
 
-La maqueta implementa el **estado TO-BE** con 3 roles (RBAC — Principio P2). En la pantalla inicial eliges el usuario de demostración:
+La maqueta implementa el **estado TO-BE** con 4 roles (RBAC — Principio P2). Puedes ingresar con **DNI y contraseña** o con los accesos rápidos de demostración:
 
-| Rol | Usuario demo | Qué demuestra |
-|---|---|---|
-| **Asegurado** | KEVIN RIOS | Pantalla de inicio tipo MiConsulta real (Citas, Órdenes Médicas), **Nueva Cita** en 4 pasos con disponibilidad en tiempo real, reprogramar/cancelar, notificaciones (RN-02, RN-04) |
-| **Jefe de Servicio** | DRA. MARÍA TORRES | **Programación asistencial obligatoria**: publica agenda con validación de 72 h (RN-01), alertas de incumplimiento — al publicar, los cupos aparecen al instante para el asegurado |
-| **Gerencia / GCTIC** | ING. CARLOS VEGA | **Dashboard de Monitoreo Digital** (Iniciativa I3): tasa de publicación por establecimiento vs. meta 70%, citas digital vs. presencial, **Audit Trail** (P3, RN-03) y Alertas de Gobernanza |
+| Rol | Usuario demo | DNI / Contraseña | Qué demuestra |
+|---|---|---|---|
+| **Asegurado** | KEVIN RIOS | 45678123 / 123456 | Pantalla de inicio tipo MiConsulta real (Citas, Órdenes Médicas), **Nueva Cita** en 4 pasos con disponibilidad en tiempo real, reprogramar/cancelar, notificaciones (RN-02, RN-04) |
+| **Jefe de Servicio** | DRA. MARÍA TORRES | 10234567 / 123456 | **Programación asistencial obligatoria**: publica agenda con validación de 72 h (RN-01), alertas de incumplimiento — al publicar, los cupos aparecen al instante para el asegurado |
+| **Gerencia / GCTIC** | ING. CARLOS VEGA | 07894561 / 123456 | **Dashboard de Monitoreo Digital** (Iniciativa I3): tasa de publicación por establecimiento vs. meta 70%, citas digital vs. presencial, **Audit Trail** (P3, RN-03) y Alertas de Gobernanza |
+| **Administrador** | LIC. SANDRA QUISPE | 09182736 / admin123 | **Gestión de usuarios** (alta, activar/desactivar — todo auditado), **Matriz de Roles y Permisos RBAC** (el SBB de la Fase E 4.6.3), auditoría de accesos fallidos/bloqueados |
+
+Hay usuarios adicionales en la base demo (Lucía Fernández 41253678, Dr. Pedro Rojas 16097534 — Traumatología, y José Castillo 32165498 con **cuenta desactivada** para demostrar el bloqueo de acceso). Los usuarios que crea el administrador pueden iniciar sesión de inmediato.
 
 ### Flujo de demostración sugerido (para exponer)
 
-1. Entrar como **Jefe de Servicio** → "Programar Disponibilidad" → intentar una fecha a menos de 72 h (el sistema la **rechaza** y lo audita: RN-01) → publicar una fecha válida.
-2. Cerrar sesión, entrar como **Asegurado** → "Nueva Cita" → Cardiología → verás la agenda recién publicada → reservar un horario → confirmación con código QR y notificación.
-3. Cerrar sesión, entrar como **Gerencia** → "Auditoría" → se ven las dos acciones anteriores registradas (quién, cuándo, qué) → "Dashboard" y "Alertas de Gobernanza".
+1. Intentar entrar con el DNI 32165498 (cuenta desactivada): el sistema **bloquea el acceso** y lo registra en auditoría.
+2. Entrar como **Administrador** → "Gestión de Usuarios" (crear un usuario nuevo, reactivar a José Castillo) → "Matriz RBAC" (mostrar que ni el admin puede tocar agendas médicas).
+3. Entrar como **Jefe de Servicio** → "Programar Disponibilidad" → intentar una fecha a menos de 72 h (el sistema la **rechaza** y lo audita: RN-01) → publicar una fecha válida.
+4. Cerrar sesión, entrar como **Asegurado** → "Nueva Cita" → Cardiología → verás la agenda recién publicada → reservar un horario → confirmación con código QR y notificación.
+5. Cerrar sesión, entrar como **Gerencia** → "Auditoría" → se ven todas las acciones anteriores registradas (quién, cuándo, qué) → "Dashboard" y "Alertas de Gobernanza".
 
 ### Correspondencia con los artefactos TOGAF
 

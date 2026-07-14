@@ -17,24 +17,49 @@ function esc(s) {
 /* ============================================================
    LOGIN (RBAC — Principio P2)
    ============================================================ */
-var ROL_NOMBRE = { asegurado: "Asegurado", jefe: "Jefe de Servicio", gerencia: "Gerencia / GCTIC" };
+var ROL_NOMBRE = { asegurado: "Asegurado", jefe: "Jefe de Servicio", gerencia: "Gerencia / GCTIC", admin: "Administrador" };
 
 function renderLogin() {
   var html = "";
-  DB.usuarios.forEach(function (u) {
+  DB.usuarios.filter(function (u) { return u.demo; }).forEach(function (u) {
     html +=
       '<button class="user-card" onclick="login(\'' + u.id + '\')">' +
       '<span class="avatar">' + u.avatar + "</span>" +
       '<div class="u-name">' + esc(u.nombre) + "</div>" +
       '<span class="u-role">' + ROL_NOMBRE[u.rol] + "</span>" +
-      '<div class="u-desc">' + esc(u.desc) + "</div>" +
+      '<div class="u-desc">' + esc(u.desc || "") + "</div>" +
       "</button>";
   });
   $("login-users").innerHTML = html;
+  $("login-error").innerHTML = "";
+}
+
+/* login con credenciales (formulario DNI + contraseña) */
+function loginForm(ev) {
+  ev.preventDefault();
+  var dni = $("l-dni").value.trim(), pass = $("l-pass").value;
+  var u = DB.usuarios.find(function (x) { return x.dni === dni; });
+  if (!u || u.password !== pass) {
+    $("login-error").innerHTML = '<div class="form-error">⚠ DNI o contraseña incorrectos. (Demo: DNI 45678123 / clave 123456)</div>';
+    auditar(dni || "(vacío)", "Desconocido", "LOGIN_FALLIDO", "Cognito/JWT", "Intento de acceso con credenciales inválidas");
+    return;
+  }
+  if (!u.activo) {
+    $("login-error").innerHTML = '<div class="form-error">⛔ Tu cuenta está <b>desactivada</b>. Contacta al administrador del sistema.</div>';
+    auditar(u.nombre, ROL_NOMBRE[u.rol], "LOGIN_BLOQUEADO", "Cognito/JWT", "Acceso denegado: cuenta desactivada");
+    return;
+  }
+  $("l-dni").value = ""; $("l-pass").value = "";
+  login(u.id);
 }
 
 function login(userId) {
   currentUser = DB.usuarios.find(function (u) { return u.id === userId; });
+  if (!currentUser.activo) {
+    $("login-error").innerHTML = '<div class="form-error">⛔ Esta cuenta está desactivada por el administrador.</div>';
+    currentUser = null;
+    return;
+  }
   auditar(currentUser.nombre, ROL_NOMBRE[currentUser.rol], "INICIAR_SESION", "Cognito/JWT", "Autenticación simulada — token de rol emitido");
   $("login-screen").classList.add("hidden");
   $("app").classList.remove("hidden");
@@ -47,7 +72,7 @@ function login(userId) {
     : (currentUser.servicio ? "Servicio: <b>" + currentUser.servicio + "</b>" : "Perfil institucional");
 
   renderNav();
-  var inicial = { asegurado: "inicio", jefe: "panel-jefe", gerencia: "dashboard" }[currentUser.rol];
+  var inicial = { asegurado: "inicio", jefe: "panel-jefe", gerencia: "dashboard", admin: "panel-admin" }[currentUser.rol];
   irA(inicial);
   actualizarCampana();
 }
@@ -84,6 +109,13 @@ var MENUS = {
     { v: "auditoria", ico: "🔍", txt: "Auditoría (Audit Trail)", bn: "Auditoría" },
     { v: "alertas-gob", ico: "🚨", txt: "Alertas de Gobernanza", bn: "Alertas" },
     { v: "perfil", ico: "👤", txt: "Mi Perfil", bn: "Perfil" }
+  ],
+  admin: [
+    { v: "panel-admin", ico: "🏠", txt: "Inicio", bn: "Inicio" },
+    { v: "usuarios", ico: "👥", txt: "Gestión de Usuarios", bn: "Usuarios" },
+    { v: "matriz-rbac", ico: "🔐", txt: "Matriz de Roles (RBAC)", bn: "RBAC" },
+    { v: "auditoria", ico: "🔍", txt: "Auditoría (Audit Trail)", bn: "Auditoría" },
+    { v: "perfil", ico: "👤", txt: "Mi Perfil" }
   ]
 };
 
@@ -119,7 +151,8 @@ function irA(view) {
     "perfil": vPerfil, "teleeduca": vSimple, "riesgo": vSimple,
     "panel-jefe": vPanelJefe, "programar": vProgramar, "mis-programaciones": vMisProgramaciones,
     "alertas-jefe": vAlertasJefe,
-    "dashboard": vDashboard, "auditoria": vAuditoria, "alertas-gob": vAlertasGob
+    "dashboard": vDashboard, "auditoria": vAuditoria, "alertas-gob": vAlertasGob,
+    "panel-admin": vPanelAdmin, "usuarios": vUsuarios, "matriz-rbac": vMatrizRBAC
   };
   $("content").innerHTML = "";
   (vistas[view] || vInicio)();
@@ -424,7 +457,7 @@ function vacio(ico, txt, view, btnTxt) {
    VISTAS — JEFE DE SERVICIO (Programación Asistencial TO-BE)
    ============================================================ */
 function misProgs() {
-  return DB.programaciones.filter(function (p) { return p.medicoId === "M1"; })
+  return DB.programaciones.filter(function (p) { return p.medicoId === currentUser.medicoId; })
     .sort(function (a, b) { return a.fecha < b.fecha ? -1 : 1; });
 }
 
@@ -485,8 +518,9 @@ function publicarProg() {
     msg.innerHTML = '<div class="form-error">⚠ La hora de fin debe ser mayor a la hora de inicio.</div>'; return;
   }
 
+  var miMed = getMed(currentUser.medicoId);
   DB.programaciones.push({
-    id: nextId("P"), medicoId: "M1", estId: currentUser.centroId, espId: "S1",
+    id: nextId("P"), medicoId: currentUser.medicoId, estId: currentUser.centroId, espId: miMed.espId,
     fecha: fecha, horaInicio: ini, horaFin: fin, cuposTotal: cupos,
     estado: "publicada", creadoPor: currentUser.nombreCompleto, fechaCreacion: ahoraStr()
   });
@@ -685,6 +719,7 @@ function vAuditoria() {
     '<option value="">Todas las acciones</option>' +
     '<option>PUBLICAR_PROGRAMACION</option><option>RESERVAR_CITA</option><option>CANCELAR_CITA</option>' +
     '<option>REPROGRAMAR_CITA</option><option>ALERTA_INCUMPLIMIENTO</option><option>RECHAZO_VALIDACION_72H</option><option>INICIAR_SESION</option>' +
+    '<option>ALTA_USUARIO</option><option>DESACTIVAR_USUARIO</option><option>REACTIVAR_USUARIO</option><option>LOGIN_FALLIDO</option><option>LOGIN_BLOQUEADO</option>' +
     "</select></div></div>" +
     '<div class="table-wrap"><table class="tbl"><thead><tr>' +
     "<th>Fecha / hora</th><th>Usuario</th><th>Rol</th><th>Acción</th><th>Entidad</th><th>Detalle</th>" +
@@ -699,8 +734,8 @@ function renderAuditoria() {
   var rows = DB.auditoria.filter(function (a) { return !f || a.accion === f; });
   var html = "";
   rows.slice(0, 60).forEach(function (a) {
-    var chipCls = a.accion.indexOf("ALERTA") === 0 || a.accion.indexOf("RECHAZO") === 0 ? "crit"
-      : (a.accion === "RESERVAR_CITA" || a.accion === "PUBLICAR_PROGRAMACION" ? "good" : "info");
+    var chipCls = /^(ALERTA|RECHAZO|LOGIN_FALLIDO|LOGIN_BLOQUEADO|DESACTIVAR)/.test(a.accion) ? "crit"
+      : (/^(RESERVAR_CITA|PUBLICAR_PROGRAMACION|ALTA_USUARIO|REACTIVAR)/.test(a.accion) ? "good" : "info");
     html += "<tr><td>" + esc(a.ts) + "</td><td>" + esc(a.usuario) + "</td><td>" + esc(a.rol) + "</td>" +
       '<td><span class="chip ' + chipCls + '">' + a.accion + "</span></td><td>" + esc(a.entidad) + "</td><td>" + esc(a.detalle) + "</td></tr>";
   });
@@ -726,6 +761,145 @@ function vAlertasGob() {
     "Los demás establecimientos del piloto superan el 70% de publicación digital.</div></div>" +
     '<div class="arch-note"><b>Principio P1:</b> la disponibilidad se publica únicamente por el canal digital institucional. ' +
     "Estas alertas hacen visible y auditable el incumplimiento, cerrando la brecha de gobernanza identificada en el AS-IS.</div>";
+  $("content").innerHTML = html;
+}
+
+/* ============================================================
+   VISTAS — ADMINISTRADOR (Gestión de usuarios y RBAC)
+   ============================================================ */
+var ROL_CHIP = { asegurado: "info", jefe: "good", gerencia: "neutral", admin: "warn" };
+
+function vPanelAdmin() {
+  var us = DB.usuarios;
+  var activos = us.filter(function (u) { return u.activo; }).length;
+  var porRol = {};
+  us.forEach(function (u) { porRol[u.rol] = (porRol[u.rol] || 0) + 1; });
+  var fallidos = DB.auditoria.filter(function (a) { return a.accion === "LOGIN_FALLIDO" || a.accion === "LOGIN_BLOQUEADO"; }).length;
+
+  $("content").innerHTML = "<h2>Panel de Administración</h2>" +
+    "<p class='sub'>Gestión de identidades y accesos — simulación de AWS Cognito (pool de usuarios institucional)</p>" +
+    '<div class="kpi-row">' +
+    kpi("Usuarios registrados", us.length, "") +
+    kpi("Cuentas activas", activos, activos === us.length ? "up" : "", activos < us.length ? (us.length - activos) + " desactivada(s)" : "Todas activas") +
+    kpi("Jefes de Servicio", porRol.jefe || 0, "") +
+    kpi("Accesos denegados", fallidos, fallidos ? "down" : "", fallidos ? "Ver auditoría" : "Sin incidentes") +
+    "</div>" +
+    tarjeta("👥", "Gestión de Usuarios", "irA('usuarios')", us.length) +
+    tarjeta("🔐", "Matriz de Roles y Permisos (RBAC)", "irA('matriz-rbac')") +
+    tarjeta("🔍", "Auditoría (Audit Trail)", "irA('auditoria')") +
+    '<div class="arch-note"><b>Principio P2 — Gobernanza por roles:</b> el administrador gestiona el ciclo de vida de las cuentas ' +
+    "(alta, rol, desactivación) pero <b>no puede</b> modificar agendas médicas ni reservar citas: sus permisos también están limitados por la matriz RBAC.</div>";
+}
+
+function vUsuarios() {
+  var html = "<h2>Gestión de Usuarios</h2>" +
+    "<p class='sub'>Alta, roles y estado de cuentas — cada cambio queda en el Audit Trail (RN-03)</p>" +
+    '<div class="form-actions" style="margin-bottom:16px"><button class="btn" onclick="modalNuevoUsuario()">＋ Nuevo usuario</button></div>' +
+    '<div class="panel"><div class="table-wrap"><table class="tbl"><thead><tr>' +
+    "<th>Usuario</th><th>DNI</th><th>Rol</th><th>Centro / Servicio</th><th>Estado</th><th>Acciones</th>" +
+    "</tr></thead><tbody>";
+  DB.usuarios.forEach(function (u) {
+    var centro = getEst(u.centroId);
+    html += "<tr><td>" + u.avatar + " <b>" + esc(u.nombre) + "</b><br><span style='color:var(--ink-3);font-size:12px'>" + esc(u.nombreCompleto) + "</span></td>" +
+      "<td>" + u.dni + "</td>" +
+      '<td><span class="chip ' + (ROL_CHIP[u.rol] || "neutral") + '">' + ROL_NOMBRE[u.rol] + "</span></td>" +
+      "<td>" + (centro ? centro.nombre : "—") + (u.servicio ? "<br><span style='color:var(--ink-3);font-size:12px'>" + u.servicio + "</span>" : "") + "</td>" +
+      "<td>" + (u.activo ? '<span class="chip good">✓ Activa</span>' : '<span class="chip crit">⛔ Desactivada</span>') + "</td>" +
+      "<td>" + (u.id === currentUser.id
+        ? '<span style="color:var(--ink-3);font-size:12px">(tu cuenta)</span>'
+        : '<button class="btn sm ' + (u.activo ? "danger" : "secondary") + '" onclick="toggleUsuario(\'' + u.id + '\')">' + (u.activo ? "Desactivar" : "Reactivar") + "</button>") +
+      "</td></tr>";
+  });
+  html += "</tbody></table></div>" +
+    '<p class="panel-note">Contraseña por defecto de las cuentas demo: <b>123456</b> (admin: <b>admin123</b>). En el TO-BE real la autenticación la gobierna AWS Cognito con tokens JWT firmados (RS256).</p></div>';
+  $("content").innerHTML = html;
+}
+
+function toggleUsuario(id) {
+  var u = DB.usuarios.find(function (x) { return x.id === id; });
+  u.activo = !u.activo;
+  guardarDB();
+  auditar(currentUser.nombre, "Administrador", u.activo ? "REACTIVAR_USUARIO" : "DESACTIVAR_USUARIO", "Usuario",
+    u.nombre + " (" + ROL_NOMBRE[u.rol] + ", DNI " + u.dni + ")");
+  vUsuarios();
+}
+
+function modalNuevoUsuario() {
+  var optsCentro = "";
+  DB.establecimientos.forEach(function (e) { optsCentro += '<option value="' + e.id + '">' + e.nombre + "</option>"; });
+  abrirModal(
+    "<h3>Nuevo usuario</h3>" +
+    '<div class="form-grid">' +
+    '<div class="field"><label>Nombre completo</label><input id="nu-nombre" placeholder="APELLIDOS, Nombres"></div>' +
+    '<div class="field"><label>DNI</label><input id="nu-dni" inputmode="numeric" maxlength="8" placeholder="8 dígitos"></div>' +
+    '<div class="field"><label>Rol (RBAC)</label><select id="nu-rol">' +
+    '<option value="asegurado">Asegurado</option><option value="jefe">Jefe de Servicio</option>' +
+    '<option value="gerencia">Gerencia / GCTIC</option><option value="admin">Administrador</option></select></div>' +
+    '<div class="field"><label>Centro</label><select id="nu-centro">' + optsCentro + "</select></div>" +
+    '<div class="field"><label>Contraseña inicial</label><input id="nu-pass" value="123456"></div>' +
+    "</div><div id='nu-msg'></div>" +
+    '<div class="form-actions"><button class="btn secondary" onclick="cerrarModal()">Cancelar</button>' +
+    '<button class="btn" onclick="crearUsuario()">Crear usuario ✓</button></div>'
+  );
+}
+
+function crearUsuario() {
+  var nombre = $("nu-nombre").value.trim(), dni = $("nu-dni").value.trim();
+  var rol = $("nu-rol").value, centro = $("nu-centro").value, pass = $("nu-pass").value;
+  if (!nombre || !/^\d{8}$/.test(dni) || !pass) {
+    $("nu-msg").innerHTML = '<div class="form-error">⚠ Ingresa nombre, un DNI de 8 dígitos y una contraseña.</div>'; return;
+  }
+  if (DB.usuarios.some(function (u) { return u.dni === dni; })) {
+    $("nu-msg").innerHTML = '<div class="form-error">⚠ Ya existe un usuario con ese DNI.</div>'; return;
+  }
+  var corto = nombre.split(",")[1] ? nombre.split(",")[1].trim().split(" ")[0] + " " + nombre.split(",")[0].trim().split(" ")[0] : nombre;
+  DB.usuarios.push({
+    id: nextId("U"), dni: dni, password: pass, activo: true,
+    nombre: corto.toUpperCase(), nombreCompleto: nombre.toUpperCase(),
+    rol: rol, avatar: rol === "jefe" ? "🧑‍⚕️" : (rol === "admin" ? "🧑‍💻" : (rol === "gerencia" ? "👨‍💼" : "🧑")),
+    centroId: centro,
+    vigencia: rol === "asegurado" ? fmtFechaCorta(iso(addDias(hoy(), 365))) : undefined,
+    servicio: rol === "jefe" ? "Cardiología" : undefined,
+    medicoId: rol === "jefe" ? "M1" : undefined
+  });
+  guardarDB();
+  auditar(currentUser.nombre, "Administrador", "ALTA_USUARIO", "Usuario", nombre.toUpperCase() + " · rol " + ROL_NOMBRE[rol] + " · DNI " + dni);
+  cerrarModal();
+  vUsuarios();
+}
+
+function vMatrizRBAC() {
+  var permisos = [
+    ["Reservar / cancelar sus citas (RN-02)", 1, 0, 0, 0],
+    ["Ver su historial y órdenes médicas", 1, 0, 0, 0],
+    ["Publicar programación asistencial (RN-01)", 0, 1, 0, 0],
+    ["Modificar la agenda de su propio servicio", 0, 1, 0, 0],
+    ["Ver dashboard de adopción digital", 0, 0, 1, 0],
+    ["Recibir alertas de gobernanza", 0, 1, 1, 0],
+    ["Consultar el Audit Trail completo", 0, 0, 1, 1],
+    ["Crear / desactivar usuarios", 0, 0, 0, 1],
+    ["Asignar roles (RBAC)", 0, 0, 0, 1],
+    ["Modificar agendas de otros servicios", 0, 0, 0, 0]
+  ];
+  var html = "<h2>Matriz de Roles y Permisos (RBAC)</h2>" +
+    "<p class='sub'>Solution Building Block — \"Matriz de Roles y Permisos integrada en la Directiva Normativa de Programación Asistencial\" (Fase E, sección 4.6.3)</p>" +
+    '<div class="panel"><div class="table-wrap"><table class="tbl"><thead><tr>' +
+    "<th>Permiso</th><th style='text-align:center'>Asegurado</th><th style='text-align:center'>Jefe de Servicio</th>" +
+    "<th style='text-align:center'>Gerencia</th><th style='text-align:center'>Administrador</th></tr></thead><tbody>";
+  permisos.forEach(function (p) {
+    html += "<tr><td>" + p[0] + "</td>";
+    for (var i = 1; i <= 4; i++) {
+      html += "<td style='text-align:center'>" + (p[i]
+        ? '<span class="chip good">✓ Sí</span>'
+        : '<span class="chip crit">✕ No</span>') + "</td>";
+    }
+    html += "</tr>";
+  });
+  html += "</tbody></table></div>" +
+    '<p class="panel-note">La última fila es deliberada: <b>nadie</b> —ni siquiera el administrador— puede modificar agendas ajenas. ' +
+    "Así se elimina la discrecionalidad que generaba el proceso en la sombra (brecha AS-IS).</p></div>" +
+    '<div class="arch-note"><b>Implementación TO-BE:</b> estos permisos se aplican como claims del token JWT emitido por AWS Cognito ' +
+    "y se validan en el API Gateway antes de llegar a los microservicios (sección 4.5.2).</div>";
   $("content").innerHTML = html;
 }
 
@@ -765,6 +939,7 @@ function cerrarModal() { $("modal-overlay").classList.add("hidden"); }
 document.addEventListener("DOMContentLoaded", function () {
   cargarDB();
   renderLogin();
+  $("login-form").addEventListener("submit", loginForm);
   $("btn-logout").addEventListener("click", logout);
   $("btn-bell").addEventListener("click", toggleNotifs);
   $("btn-notif-read").addEventListener("click", marcarLeidas);

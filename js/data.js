@@ -4,7 +4,7 @@
    (simula RDS/DynamoDB del TO-BE usando localStorage)
    ============================================================ */
 
-var DB_KEY = "essalud_maqueta_v1";
+var DB_KEY = "essalud_maqueta_v2";
 
 /* ---------- utilidades de fecha ---------- */
 function hoy() { var d = new Date(); d.setHours(0, 0, 0, 0); return d; }
@@ -34,20 +34,46 @@ function crearSemilla() {
 
   var usuarios = [
     {
-      id: "U1", dni: "45678123", nombre: "KEVIN RIOS", nombreCompleto: "RIOS CANO, KEVIN GIANFRANCO",
+      id: "U1", dni: "45678123", password: "123456", activo: true, demo: true,
+      nombre: "KEVIN RIOS", nombreCompleto: "RIOS CANO, KEVIN GIANFRANCO",
       rol: "asegurado", avatar: "🧑", centroId: "E1",
       vigencia: fmtFechaCorta(iso(addDias(H, 26))),
       desc: "Consulta disponibilidad real y reserva citas por el canal digital (P1)."
     },
     {
-      id: "U2", dni: "10234567", nombre: "DRA. MARÍA TORRES", nombreCompleto: "TORRES QUISPE, MARÍA ELENA",
-      rol: "jefe", avatar: "🧑‍⚕️", centroId: "E1", servicio: "Cardiología",
+      id: "U2", dni: "10234567", password: "123456", activo: true, demo: true,
+      nombre: "DRA. MARÍA TORRES", nombreCompleto: "TORRES QUISPE, MARÍA ELENA",
+      rol: "jefe", avatar: "🧑‍⚕️", centroId: "E1", servicio: "Cardiología", medicoId: "M1",
       desc: "Jefa de Servicio: publica la programación asistencial obligatoria (RBAC)."
     },
     {
-      id: "U3", dni: "07894561", nombre: "ING. CARLOS VEGA", nombreCompleto: "VEGA SALAS, CARLOS ALBERTO",
+      id: "U3", dni: "07894561", password: "123456", activo: true, demo: true,
+      nombre: "ING. CARLOS VEGA", nombreCompleto: "VEGA SALAS, CARLOS ALBERTO",
       rol: "gerencia", avatar: "👨‍💼", centroId: "E0",
       desc: "GCTIC / Gerencia: dashboard de adopción digital, auditoría y alertas."
+    },
+    {
+      id: "U4", dni: "09182736", password: "admin123", activo: true, demo: true,
+      nombre: "LIC. SANDRA QUISPE", nombreCompleto: "QUISPE HUAMÁN, SANDRA PATRICIA",
+      rol: "admin", avatar: "🧑‍💻", centroId: "E0",
+      desc: "Administradora del sistema: gestiona usuarios, roles y la matriz RBAC."
+    },
+    {
+      id: "U5", dni: "41253678", password: "123456", activo: true,
+      nombre: "LUCÍA FERNÁNDEZ", nombreCompleto: "FERNÁNDEZ ROJAS, LUCÍA BEATRIZ",
+      rol: "asegurado", avatar: "👩", centroId: "E2",
+      vigencia: fmtFechaCorta(iso(addDias(H, 90)))
+    },
+    {
+      id: "U6", dni: "16097534", password: "123456", activo: true,
+      nombre: "DR. PEDRO ROJAS", nombreCompleto: "ROJAS MENDO, PEDRO ANTONIO",
+      rol: "jefe", avatar: "👨‍⚕️", centroId: "E3", servicio: "Traumatología", medicoId: "M6"
+    },
+    {
+      id: "U7", dni: "32165498", password: "123456", activo: false,
+      nombre: "JOSÉ CASTILLO", nombreCompleto: "CASTILLO PAREDES, JOSÉ MANUEL",
+      rol: "asegurado", avatar: "🧔", centroId: "E4",
+      vigencia: fmtFechaCorta(iso(addDias(H, -10)))
     }
   ];
 
