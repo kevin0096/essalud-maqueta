@@ -28,14 +28,16 @@ No requiere instalación de nada: es HTML + CSS + JavaScript puro.
 
 ## Qué demuestra (mapeo con el documento TOGAF)
 
-La maqueta implementa el **estado TO-BE** con 4 roles (RBAC — Principio P2). Puedes ingresar con **DNI y contraseña** o con los accesos rápidos de demostración:
+La maqueta implementa el **estado TO-BE** con 4 roles (RBAC — Principio P2). Se ingresa con **DNI y contraseña**:
 
-| Rol | Usuario demo | DNI / Contraseña | Qué demuestra |
+| Rol | Usuario | DNI / Contraseña | Qué demuestra |
 |---|---|---|---|
 | **Asegurado** | KEVIN RIOS | 45678123 / 123456 | Pantalla de inicio tipo MiConsulta real (Citas, Órdenes Médicas), **Nueva Cita** en 4 pasos con disponibilidad en tiempo real, reprogramar/cancelar, notificaciones (RN-02, RN-04) |
 | **Jefe de Servicio** | DRA. MARÍA TORRES | 10234567 / 123456 | **Programación asistencial obligatoria**: publica agenda con validación de 72 h (RN-01), alertas de incumplimiento — al publicar, los cupos aparecen al instante para el asegurado |
 | **Gerencia / GCTIC** | ING. CARLOS VEGA | 07894561 / 123456 | **Dashboard de Monitoreo Digital** (Iniciativa I3): tasa de publicación por establecimiento vs. meta 70%, citas digital vs. presencial, **Audit Trail** (P3, RN-03) y Alertas de Gobernanza |
-| **Administrador** | LIC. SANDRA QUISPE | 09182736 / admin123 | **Gestión de usuarios** (alta, activar/desactivar — todo auditado), **Matriz de Roles y Permisos RBAC** (el SBB de la Fase E 4.6.3), auditoría de accesos fallidos/bloqueados |
+| **Administrador** | ING. KEVIN RIOS | 70388833 / admi1234 | **Gestión de usuarios** (alta, activar/desactivar — todo auditado), **Padrón de Asegurados**, **Matriz de Roles y Permisos RBAC** (el SBB de la Fase E 4.6.3), auditoría de accesos |
+
+El botón **"Restablecer datos de demostración"** está en el panel del Administrador (ya no en el login, para que la pantalla de ingreso se vea como un producto real).
 
 Hay usuarios adicionales en la base demo (Lucía Fernández 41253678, Dr. Pedro Rojas 16097534 — Traumatología, y José Castillo 32165498 con **cuenta desactivada** para demostrar el bloqueo de acceso). Los usuarios que crea el administrador pueden iniciar sesión de inmediato.
 

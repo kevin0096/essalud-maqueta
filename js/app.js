@@ -20,17 +20,6 @@ function esc(s) {
 var ROL_NOMBRE = { asegurado: "Asegurado", jefe: "Jefe de Servicio", gerencia: "Gerencia / GCTIC", admin: "Administrador" };
 
 function renderLogin() {
-  var html = "";
-  DB.usuarios.filter(function (u) { return u.demo; }).forEach(function (u) {
-    html +=
-      '<button class="user-card" onclick="login(\'' + u.id + '\')">' +
-      '<span class="avatar">' + u.avatar + "</span>" +
-      '<div class="u-name">' + esc(u.nombre) + "</div>" +
-      '<span class="u-role">' + ROL_NOMBRE[u.rol] + "</span>" +
-      '<div class="u-desc">' + esc(u.desc || "") + "</div>" +
-      "</button>";
-  });
-  $("login-users").innerHTML = html;
   $("login-error").innerHTML = "";
 }
 
@@ -40,7 +29,7 @@ function loginForm(ev) {
   var dni = $("l-dni").value.trim(), pass = $("l-pass").value;
   var u = DB.usuarios.find(function (x) { return x.dni === dni; });
   if (!u || u.password !== pass) {
-    $("login-error").innerHTML = '<div class="form-error">⚠ DNI o contraseña incorrectos. (Demo: DNI 45678123 / clave 123456)</div>';
+    $("login-error").innerHTML = '<div class="form-error">⚠ DNI o contraseña incorrectos. Verifica tus datos e inténtalo nuevamente.</div>';
     auditar(dni || "(vacío)", "Desconocido", "LOGIN_FALLIDO", "Cognito/JWT", "Intento de acceso con credenciales inválidas");
     return;
   }
@@ -792,7 +781,16 @@ function vPanelAdmin() {
     tarjeta("🔐", "Matriz de Roles y Permisos (RBAC)", "irA('matriz-rbac')") +
     tarjeta("🔍", "Auditoría (Audit Trail)", "irA('auditoria')") +
     '<div class="arch-note"><b>Principio P2 — Gobernanza por roles:</b> el administrador gestiona el ciclo de vida de las cuentas ' +
-    "(alta, rol, desactivación) pero <b>no puede</b> modificar agendas médicas ni reservar citas: sus permisos también están limitados por la matriz RBAC.</div>";
+    "(alta, rol, desactivación) pero <b>no puede</b> modificar agendas médicas ni reservar citas: sus permisos también están limitados por la matriz RBAC.</div>" +
+    '<div class="form-actions" style="margin-top:18px"><button class="btn danger sm" onclick="resetDesdeAdmin()">↺ Restablecer datos de demostración</button></div>';
+}
+
+function resetDesdeAdmin() {
+  abrirModal(
+    "<h3>Restablecer datos</h3><p>Se borrarán las citas, usuarios y registros creados en este navegador y se volverá a la semilla inicial de demostración. ¿Continuar?</p>" +
+    '<div class="form-actions"><button class="btn secondary" onclick="cerrarModal()">Cancelar</button>' +
+    '<button class="btn danger" onclick="resetDB();cerrarModal();logout()">Sí, restablecer</button></div>'
+  );
 }
 
 function vUsuarios() {
@@ -815,7 +813,7 @@ function vUsuarios() {
       "</td></tr>";
   });
   html += "</tbody></table></div>" +
-    '<p class="panel-note">Contraseña por defecto de las cuentas demo: <b>123456</b> (admin: <b>admin123</b>). En el TO-BE real la autenticación la gobierna AWS Cognito con tokens JWT firmados (RS256).</p></div>';
+    '<p class="panel-note">Contraseña por defecto de las cuentas de prueba: <b>123456</b>. En el TO-BE real la autenticación la gobierna AWS Cognito con tokens JWT firmados (RS256).</p></div>';
   $("content").innerHTML = html;
 }
 
@@ -1051,7 +1049,6 @@ document.addEventListener("DOMContentLoaded", function () {
   $("btn-bell").addEventListener("click", toggleNotifs);
   $("btn-notif-read").addEventListener("click", marcarLeidas);
   $("menu-toggle").addEventListener("click", function () { $("sidebar").classList.toggle("open"); });
-  $("btn-reset-demo").addEventListener("click", function () { resetDB(); renderLogin(); alert("Datos de demostración restablecidos."); });
   $("modal-overlay").addEventListener("click", function (e) { if (e.target === this) cerrarModal(); });
   document.addEventListener("click", function (e) {
     if (!$("notif-panel").classList.contains("hidden") &&

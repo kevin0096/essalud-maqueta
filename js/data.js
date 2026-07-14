@@ -4,7 +4,7 @@
    (simula RDS/DynamoDB del TO-BE usando localStorage)
    ============================================================ */
 
-var DB_KEY = "essalud_maqueta_v3";
+var DB_KEY = "essalud_maqueta_v4";
 
 /* ---------- utilidades de fecha ---------- */
 function hoy() { var d = new Date(); d.setHours(0, 0, 0, 0); return d; }
@@ -133,10 +133,10 @@ function crearSemilla() {
       desc: "GCTIC / Gerencia: dashboard de adopción digital, auditoría y alertas."
     },
     {
-      id: "U4", dni: "09182736", password: "admin123", activo: true, demo: true,
-      nombre: "LIC. SANDRA QUISPE", nombreCompleto: "QUISPE HUAMÁN, SANDRA PATRICIA",
+      id: "U4", dni: "70388833", password: "admi1234", activo: true, demo: true,
+      nombre: "ING. KEVIN RIOS", nombreCompleto: "RIOS CANO, KEVIN GIANFRANCO",
       rol: "admin", avatar: "🧑‍💻", centroId: "E0",
-      desc: "Administradora del sistema: gestiona usuarios, roles y la matriz RBAC."
+      desc: "Administrador del sistema: gestiona usuarios, roles y la matriz RBAC."
     },
     {
       id: "U5", dni: "41253678", password: "123456", activo: true,
