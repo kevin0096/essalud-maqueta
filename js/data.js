@@ -4,7 +4,7 @@
    (simula RDS/DynamoDB del TO-BE usando localStorage)
    ============================================================ */
 
-var DB_KEY = "essalud_maqueta_v4";
+var DB_KEY = "essalud_maqueta_v5";
 
 /* ---------- utilidades de fecha ---------- */
 function hoy() { var d = new Date(); d.setHours(0, 0, 0, 0); return d; }
@@ -114,21 +114,21 @@ function crearSemilla() {
 
   var usuarios = [
     {
-      id: "U1", dni: "45678123", password: "123456", activo: true, demo: true,
+      id: "U1", dni: "70388834", password: "123456", activo: true, demo: true,
       nombre: "KEVIN RIOS", nombreCompleto: "RIOS CANO, KEVIN GIANFRANCO",
       rol: "asegurado", avatar: "🧑", centroId: "E1",
       vigencia: fmtFechaCorta(iso(addDias(H, 26))),
       desc: "Consulta disponibilidad real y reserva citas por el canal digital (P1)."
     },
     {
-      id: "U2", dni: "10234567", password: "123456", activo: true, demo: true,
-      nombre: "DRA. MARÍA TORRES", nombreCompleto: "TORRES QUISPE, MARÍA ELENA",
+      id: "U2", dni: "11111111", password: "123456", activo: true, demo: true,
+      nombre: "DRA. NUÑEZ", nombreCompleto: "NUÑEZ LABIO, MARÍA JESÚS",
       rol: "jefe", avatar: "🧑‍⚕️", centroId: "E1", servicio: "Cardiología", medicoId: "M1",
       desc: "Jefa de Servicio: publica la programación asistencial obligatoria (RBAC)."
     },
     {
-      id: "U3", dni: "07894561", password: "123456", activo: true, demo: true,
-      nombre: "ING. CARLOS VEGA", nombreCompleto: "VEGA SALAS, CARLOS ALBERTO",
+      id: "U3", dni: "22222222", password: "123456", activo: true, demo: true,
+      nombre: "ING. YACILA", nombreCompleto: "YACILA ZEGARRA, ANDY DENILSON",
       rol: "gerencia", avatar: "👨‍💼", centroId: "E0",
       desc: "GCTIC / Gerencia: dashboard de adopción digital, auditoría y alertas."
     },
@@ -177,7 +177,7 @@ function crearSemilla() {
   ];
 
   var medicos = [
-    { id: "M1", nombre: "Dra. María Torres Quispe", espId: "S1", estId: "E1" },
+    { id: "M1", nombre: "Dra. María Nuñez Labio", espId: "S1", estId: "E1" },
     { id: "M2", nombre: "Dr. Jorge Salinas Prado", espId: "S1", estId: "E2" },
     { id: "M3", nombre: "Dra. Rosa Gutiérrez León", espId: "S2", estId: "E1" },
     { id: "M4", nombre: "Dr. Luis Campos Vera", espId: "S2", estId: "E4" },
@@ -255,7 +255,7 @@ function crearSemilla() {
 
   /* Auditoría (P3 — trazabilidad total). Semilla + eventos en runtime */
   var auditoria = [
-    { id: "A1", ts: iso(addDias(H, -2)) + " 08:30", usuario: "Dra. María Torres Quispe", rol: "Jefe de Servicio", accion: "PUBLICAR_PROGRAMACION", entidad: "ProgramacionAsistencial", detalle: "Cardiología · POL. PROCERES · 8 cupos · " + fmtFechaCorta(iso(addDias(H, 4))) },
+    { id: "A1", ts: iso(addDias(H, -2)) + " 08:30", usuario: "Dra. María Nuñez Labio", rol: "Jefe de Servicio", accion: "PUBLICAR_PROGRAMACION", entidad: "ProgramacionAsistencial", detalle: "Cardiología · POL. PROCERES · 8 cupos · " + fmtFechaCorta(iso(addDias(H, 4))) },
     { id: "A2", ts: iso(addDias(H, -2)) + " 19:12", usuario: "KEVIN RIOS", rol: "Asegurado", accion: "RESERVAR_CITA", entidad: "CitaMedica", detalle: "Cardiología · " + fmtFechaCorta(iso(addDias(H, 4))) + " 08:30 · canal digital" },
     { id: "A3", ts: iso(addDias(H, -3)) + " 07:55", usuario: "Dra. Rosa Gutiérrez León", rol: "Jefe de Servicio", accion: "PUBLICAR_PROGRAMACION", entidad: "ProgramacionAsistencial", detalle: "Medicina General · POL. PROCERES · 12 cupos · " + fmtFechaCorta(iso(addDias(H, 3))) },
     { id: "A4", ts: iso(addDias(H, -4)) + " 16:40", usuario: "SISTEMA", rol: "Gobernanza", accion: "ALERTA_INCUMPLIMIENTO", entidad: "AuditTrail", detalle: "POL. CHINCHA no registró agenda con 72 h de anticipación (RN-01)" },
