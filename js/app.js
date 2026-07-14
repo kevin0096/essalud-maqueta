@@ -106,15 +106,17 @@ var MENUS = {
   ],
   gerencia: [
     { v: "dashboard", ico: "📊", txt: "Dashboard de Monitoreo", bn: "Dashboard" },
+    { v: "padron", ico: "🗂️", txt: "Padrón de Asegurados", bn: "Padrón" },
     { v: "auditoria", ico: "🔍", txt: "Auditoría (Audit Trail)", bn: "Auditoría" },
     { v: "alertas-gob", ico: "🚨", txt: "Alertas de Gobernanza", bn: "Alertas" },
-    { v: "perfil", ico: "👤", txt: "Mi Perfil", bn: "Perfil" }
+    { v: "perfil", ico: "👤", txt: "Mi Perfil" }
   ],
   admin: [
     { v: "panel-admin", ico: "🏠", txt: "Inicio", bn: "Inicio" },
     { v: "usuarios", ico: "👥", txt: "Gestión de Usuarios", bn: "Usuarios" },
+    { v: "padron", ico: "🗂️", txt: "Padrón de Asegurados", bn: "Padrón" },
     { v: "matriz-rbac", ico: "🔐", txt: "Matriz de Roles (RBAC)", bn: "RBAC" },
-    { v: "auditoria", ico: "🔍", txt: "Auditoría (Audit Trail)", bn: "Auditoría" },
+    { v: "auditoria", ico: "🔍", txt: "Auditoría (Audit Trail)" },
     { v: "perfil", ico: "👤", txt: "Mi Perfil" }
   ]
 };
@@ -152,7 +154,8 @@ function irA(view) {
     "panel-jefe": vPanelJefe, "programar": vProgramar, "mis-programaciones": vMisProgramaciones,
     "alertas-jefe": vAlertasJefe,
     "dashboard": vDashboard, "auditoria": vAuditoria, "alertas-gob": vAlertasGob,
-    "panel-admin": vPanelAdmin, "usuarios": vUsuarios, "matriz-rbac": vMatrizRBAC
+    "panel-admin": vPanelAdmin, "usuarios": vUsuarios, "matriz-rbac": vMatrizRBAC,
+    "padron": vPadron
   };
   $("content").innerHTML = "";
   (vistas[view] || vInicio)();
@@ -785,6 +788,7 @@ function vPanelAdmin() {
     kpi("Accesos denegados", fallidos, fallidos ? "down" : "", fallidos ? "Ver auditoría" : "Sin incidentes") +
     "</div>" +
     tarjeta("👥", "Gestión de Usuarios", "irA('usuarios')", us.length) +
+    tarjeta("🗂️", "Padrón de Asegurados (RAUUS)", "irA('padron')", DB.pacientes.length) +
     tarjeta("🔐", "Matriz de Roles y Permisos (RBAC)", "irA('matriz-rbac')") +
     tarjeta("🔍", "Auditoría (Audit Trail)", "irA('auditoria')") +
     '<div class="arch-note"><b>Principio P2 — Gobernanza por roles:</b> el administrador gestiona el ciclo de vida de las cuentas ' +
@@ -901,6 +905,109 @@ function vMatrizRBAC() {
     '<div class="arch-note"><b>Implementación TO-BE:</b> estos permisos se aplican como claims del token JWT emitido por AWS Cognito ' +
     "y se validan en el API Gateway antes de llegar a los microservicios (sección 4.5.2).</div>";
   $("content").innerHTML = html;
+}
+
+/* ============================================================
+   PADRÓN DE ASEGURADOS (simulación RAUUS — 320 registros)
+   ============================================================ */
+var padronF = { q: "", centro: "", estado: "", pag: 1 };
+var PADRON_POR_PAG = 15;
+
+function vPadron() {
+  padronF = { q: "", centro: "", estado: "", pag: 1 };
+  var ps = DB.pacientes;
+  var activas = ps.filter(function (p) { return p.estado === "Activa"; }).length;
+  var conAt = ps.filter(function (p) { return p.atenciones > 0; });
+  var dig = conAt.filter(function (p) { return p.canal === "digital"; }).length;
+  var pctDig = Math.round(dig / conAt.length * 100);
+  var edadProm = Math.round(ps.reduce(function (s, p) { return s + edadDe(p.fechaNac); }, 0) / ps.length);
+
+  var optsCentro = '<option value="">Todos los centros</option>';
+  DB.establecimientos.filter(function (e) { return e.id !== "E0"; }).forEach(function (e) {
+    optsCentro += '<option value="' + e.id + '">' + e.nombre + "</option>";
+  });
+
+  $("content").innerHTML = "<h2>Padrón de Asegurados</h2>" +
+    "<p class='sub'>Registro de afiliación sincronizado desde RAUUS — " + ps.length + " asegurados adscritos a la Red Lima (datos ficticios de demostración)</p>" +
+    '<div class="kpi-row">' +
+    kpi("Asegurados adscritos", ps.length, "") +
+    kpi("Afiliaciones activas", activas + " (" + Math.round(activas / ps.length * 100) + "%)", "") +
+    kpi("Usan canal digital", pctDig + "%", "up", "de quienes registran atenciones") +
+    kpi("Edad promedio", edadProm + " años", "") +
+    "</div>" +
+    '<div class="panel"><div class="form-grid" style="margin-bottom:14px">' +
+    '<div class="field"><label>Buscar (DNI o apellidos)</label><input id="pd-q" placeholder="Ej. 45678123 o QUISPE" oninput="padronF.q=this.value;padronF.pag=1;renderPadron()"></div>' +
+    '<div class="field"><label>Centro asistencial</label><select id="pd-centro" onchange="padronF.centro=this.value;padronF.pag=1;renderPadron()">' + optsCentro + "</select></div>" +
+    '<div class="field"><label>Estado de afiliación</label><select id="pd-estado" onchange="padronF.estado=this.value;padronF.pag=1;renderPadron()">' +
+    '<option value="">Todos</option><option>Activa</option><option>Suspendida</option><option>En trámite</option></select></div>' +
+    "</div>" +
+    '<div class="table-wrap"><table class="tbl"><thead><tr>' +
+    "<th>DNI</th><th>Asegurado</th><th>Sexo / Edad</th><th>Centro</th><th>Tipo</th><th>Estado</th><th class='num'>Atenciones</th><th>Última atención</th>" +
+    '</tr></thead><tbody id="pd-body"></tbody></table></div>' +
+    '<div id="pd-pag" class="pag-row"></div>' +
+    '<p class="panel-note">Haz clic en un asegurado para ver su ficha RAUUS. En el TO-BE estos datos se sincronizan en tiempo real mediante eventos (brecha cerrada de la Fase C: integración batch → tiempo real).</p></div>' +
+    '<div class="arch-note"><b>Entidad Asegurado (4.4.1):</b> id (DNI), nombre completo, fecha de nacimiento, centro de atención y estado de afiliación — ' +
+    "sincronizada desde RAUUS. Este padrón alimenta la validación de acreditación en cada reserva (RS-01).</div>";
+  renderPadron();
+}
+
+function padronFiltrado() {
+  var q = padronF.q.trim().toUpperCase();
+  return DB.pacientes.filter(function (p) {
+    if (padronF.centro && p.centroId !== padronF.centro) return false;
+    if (padronF.estado && p.estado !== padronF.estado) return false;
+    if (q && p.dni.indexOf(q) === -1 && (p.apellidos + " " + p.nombres).indexOf(q) === -1) return false;
+    return true;
+  });
+}
+
+function renderPadron() {
+  var rows = padronFiltrado();
+  var totalPag = Math.max(1, Math.ceil(rows.length / PADRON_POR_PAG));
+  if (padronF.pag > totalPag) padronF.pag = totalPag;
+  var ini = (padronF.pag - 1) * PADRON_POR_PAG;
+  var html = "";
+  rows.slice(ini, ini + PADRON_POR_PAG).forEach(function (p) {
+    var est = getEst(p.centroId);
+    var chip = p.estado === "Activa" ? '<span class="chip good">✓ Activa</span>'
+      : (p.estado === "Suspendida" ? '<span class="chip crit">⛔ Suspendida</span>' : '<span class="chip warn">⏳ En trámite</span>');
+    html += '<tr class="row-click" onclick="fichaPaciente(\'' + p.dni + '\')">' +
+      "<td>" + p.dni + "</td>" +
+      "<td><b>" + esc(p.apellidos) + "</b>, " + esc(p.nombres) + "</td>" +
+      "<td>" + (p.sexo === "F" ? "♀ F" : "♂ M") + " · " + edadDe(p.fechaNac) + " años</td>" +
+      "<td>" + est.nombre + "</td>" +
+      "<td>" + p.tipo + "</td>" +
+      "<td>" + chip + "</td>" +
+      "<td class='num'>" + p.atenciones + "</td>" +
+      "<td>" + (p.ultimaAtencion ? fmtFechaCorta(p.ultimaAtencion) : "—") + "</td></tr>";
+  });
+  $("pd-body").innerHTML = html || '<tr><td colspan="8" class="empty-state">Sin resultados para esta búsqueda.</td></tr>';
+
+  var pag = '<span class="pag-info">' + rows.length + " asegurados · página " + padronF.pag + " de " + totalPag + "</span>" +
+    '<button class="btn secondary sm" ' + (padronF.pag <= 1 ? "disabled" : "") + ' onclick="padronF.pag--;renderPadron()">‹ Anterior</button>' +
+    '<button class="btn secondary sm" ' + (padronF.pag >= totalPag ? "disabled" : "") + ' onclick="padronF.pag++;renderPadron()">Siguiente ›</button>';
+  $("pd-pag").innerHTML = pag;
+}
+
+function fichaPaciente(dni) {
+  var p = DB.pacientes.find(function (x) { return x.dni === dni; });
+  var est = getEst(p.centroId);
+  abrirModal(
+    '<div class="profile-head"><span class="avatar">' + (p.sexo === "F" ? "👩" : "🧑") + "</span>" +
+    '<div><div class="p-name">' + esc(p.apellidos) + ", " + esc(p.nombres) + '</div><div class="p-role">Ficha del asegurado — RAUUS</div></div></div>' +
+    fila("DNI", p.dni) +
+    fila("Fecha de nacimiento", fmtFechaCorta(p.fechaNac) + " (" + edadDe(p.fechaNac) + " años)") +
+    fila("Sexo", p.sexo === "F" ? "Femenino" : "Masculino") +
+    fila("Tipo de asegurado", p.tipo) +
+    fila("Estado de afiliación", p.estado) +
+    fila("Centro de adscripción", est.nombre) +
+    fila("Distrito", p.distrito) +
+    fila("Teléfono", p.telefono) +
+    fila("Atenciones registradas", p.atenciones) +
+    fila("Última atención", p.ultimaAtencion ? fmtFechaCorta(p.ultimaAtencion) : "Sin atenciones") +
+    fila("Canal preferente", p.canal ? (p.canal === "digital" ? "Digital (app/web)" : "Presencial") : "—") +
+    '<div class="form-actions"><button class="btn" onclick="cerrarModal()">Cerrar</button></div>'
+  );
 }
 
 /* ============================================================

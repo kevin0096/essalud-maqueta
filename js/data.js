@@ -4,7 +4,7 @@
    (simula RDS/DynamoDB del TO-BE usando localStorage)
    ============================================================ */
 
-var DB_KEY = "essalud_maqueta_v2";
+var DB_KEY = "essalud_maqueta_v3";
 
 /* ---------- utilidades de fecha ---------- */
 function hoy() { var d = new Date(); d.setHours(0, 0, 0, 0); return d; }
@@ -26,6 +26,86 @@ function fmtFechaCorta(isoStr) {
 function ahoraStr() {
   var d = new Date();
   return iso(d) + " " + String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+}
+
+/* ---------- padrón de asegurados (simulación RAUUS) ----------
+   Se generan 320 pacientes ficticios con un generador de semilla fija
+   (mulberry32): todos los navegadores muestran exactamente el mismo padrón,
+   ideal para la presentación. */
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    var t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+var NOMBRES_M = ["José", "Luis", "Carlos", "Jorge", "Miguel", "Juan", "Pedro", "Víctor", "César", "Manuel",
+  "Raúl", "Óscar", "Fernando", "Ricardo", "Eduardo", "Roberto", "Javier", "Marco", "Walter", "Hugo",
+  "Andrés", "Diego", "Kevin", "Alonso", "Renato", "Gustavo", "Enrique", "Alfredo", "Rubén", "Julio"];
+var NOMBRES_F = ["María", "Rosa", "Carmen", "Ana", "Luz", "Julia", "Teresa", "Elena", "Patricia", "Gloria",
+  "Silvia", "Norma", "Rocío", "Karina", "Vanessa", "Claudia", "Cecilia", "Isabel", "Lucía", "Milagros",
+  "Fiorella", "Katherine", "Jessica", "Pamela", "Diana", "Susana", "Beatriz", "Angélica", "Yolanda", "Doris"];
+var APELLIDOS = ["García", "Rodríguez", "Flores", "Quispe", "Sánchez", "Ramos", "Torres", "Díaz", "Vásquez", "Castillo",
+  "Rojas", "Mendoza", "Chávez", "Huamán", "Gonzales", "Espinoza", "Cruz", "Vargas", "Paredes", "Aguilar",
+  "Salazar", "Gutiérrez", "Fernández", "Medina", "Romero", "Castro", "León", "Herrera", "Valdez", "Campos",
+  "Mamani", "Condori", "Palacios", "Silva", "Navarro", "Cárdenas", "Delgado", "Peña", "Ríos", "Bravo"];
+var DISTRITOS = ["San Juan de Lurigancho", "San Martín de Porres", "Ate", "Comas", "Villa El Salvador",
+  "Villa María del Triunfo", "San Juan de Miraflores", "Los Olivos", "Puente Piedra", "Santiago de Surco",
+  "Chorrillos", "Carabayllo", "Lima Cercado", "Santa Anita", "Lurigancho-Chosica", "Independencia",
+  "El Agustino", "La Victoria", "Rímac", "San Miguel", "Callao", "Breña", "Surquillo", "Jesús María"];
+
+function generarPacientes(H) {
+  var rnd = mulberry32(20260713);
+  function pick(arr) { return arr[Math.floor(rnd() * arr.length)]; }
+  var centros = ["E1", "E2", "E3", "E4", "E5", "E6"];
+  var pacientes = [];
+  var usados = {};
+  for (var i = 0; i < 320; i++) {
+    var dni;
+    do { dni = String(10000000 + Math.floor(rnd() * 69999999)); } while (usados[dni]);
+    usados[dni] = 1;
+
+    var sexo = rnd() < 0.52 ? "F" : "M";
+    var nombre1 = pick(sexo === "F" ? NOMBRES_F : NOMBRES_M);
+    var nombre2 = rnd() < 0.6 ? " " + pick(sexo === "F" ? NOMBRES_F : NOMBRES_M) : "";
+    var apePat = pick(APELLIDOS), apeMat = pick(APELLIDOS);
+
+    var edad = 1 + Math.floor(rnd() * 89);
+    var nac = new Date(H); nac.setFullYear(nac.getFullYear() - edad); nac.setDate(1 + Math.floor(rnd() * 360));
+
+    var rEstado = rnd();
+    var estado = rEstado < 0.90 ? "Activa" : (rEstado < 0.96 ? "Suspendida" : "En trámite");
+    var tieneAtencion = rnd() < 0.85;
+    var ult = tieneAtencion ? iso(addDias(H, -Math.floor(rnd() * 540))) : null;
+
+    pacientes.push({
+      dni: dni,
+      nombres: (nombre1 + nombre2).toUpperCase(),
+      apellidos: (apePat + " " + apeMat).toUpperCase(),
+      sexo: sexo,
+      fechaNac: iso(nac),
+      centroId: pick(centros),
+      distrito: pick(DISTRITOS),
+      telefono: "9" + String(10000000 + Math.floor(rnd() * 89999999)),
+      tipo: rnd() < 0.68 ? "Titular" : "Derechohabiente",
+      estado: estado,
+      ultimaAtencion: ult,
+      canal: tieneAtencion ? (rnd() < 0.42 ? "digital" : "presencial") : null,
+      atenciones: tieneAtencion ? 1 + Math.floor(rnd() * 24) : 0
+    });
+  }
+  return pacientes;
+}
+
+function edadDe(fechaNac) {
+  var p = fechaNac.split("-");
+  var n = new Date(+p[0], +p[1] - 1, +p[2]);
+  var h = hoy();
+  var e = h.getFullYear() - n.getFullYear();
+  if (h.getMonth() < n.getMonth() || (h.getMonth() === n.getMonth() && h.getDate() < n.getDate())) e--;
+  return e;
 }
 
 /* ---------- semilla de demostración ---------- */
@@ -209,6 +289,7 @@ function crearSemilla() {
 
   return {
     usuarios: usuarios, establecimientos: establecimientos, especialidades: especialidades,
+    pacientes: generarPacientes(H),
     medicos: medicos, programaciones: programaciones, citas: citas, pendientes: pendientes,
     recetas: recetas, examenes: examenes, referencias: referencias,
     auditoria: auditoria, notificaciones: notificaciones,

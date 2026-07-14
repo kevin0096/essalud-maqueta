@@ -258,6 +258,10 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .tbl td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
 .tbl tr:hover td { background: #FAFCFD; }
 .tbl .num { text-align: right; font-variant-numeric: tabular-nums; }
+.tbl tr.row-click { cursor: pointer; }
+.tbl tr.row-click:hover td { background: #F2FAFB; }
+.pag-row { display: flex; align-items: center; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+.pag-info { font-size: 12.5px; color: var(--ink-3); margin-right: auto; }
 
 /* Chips de estado (color + icono + texto: nunca solo color) */
 .chip { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; border-radius: 20px; padding: 3px 11px; white-space: nowrap; }

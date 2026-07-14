@@ -39,6 +39,12 @@ La maqueta implementa el **estado TO-BE** con 4 roles (RBAC — Principio P2). P
 
 Hay usuarios adicionales en la base demo (Lucía Fernández 41253678, Dr. Pedro Rojas 16097534 — Traumatología, y José Castillo 32165498 con **cuenta desactivada** para demostrar el bloqueo de acceso). Los usuarios que crea el administrador pueden iniciar sesión de inmediato.
 
+### Padrón de Asegurados (320 pacientes de ejemplo)
+
+Admin y Gerencia tienen el módulo **"Padrón de Asegurados"**: una base de **320 pacientes ficticios** que simula el sistema RAUUS, con DNI, nombre, sexo, edad, centro de adscripción, distrito, tipo (titular/derechohabiente), estado de afiliación (activa/suspendida/en trámite), número de atenciones y canal preferente. Incluye **buscador por DNI o apellidos, filtros por centro y estado, paginación** y ficha individual por paciente (clic en la fila).
+
+Los pacientes se generan con una **semilla fija** (generador determinístico), así que todos los integrantes del grupo verán exactamente el mismo padrón en cualquier navegador — útil para ensayar la presentación citando casos concretos.
+
 ### Flujo de demostración sugerido (para exponer)
 
 1. Intentar entrar con el DNI 32165498 (cuenta desactivada): el sistema **bloquea el acceso** y lo registra en auditoría.
